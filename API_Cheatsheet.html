@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E-Book Shop — API Cheat Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:       #1a1a2e;
+  --navy2:      #16213e;
+  --blue:       #0f3460;
+  --gold:       #e2b96e;
+  --gold-light: #f5d98b;
+
+  --bg:         #0d1117;
+  --bg2:        #161b22;
+  --bg3:        #21262d;
+  --bg4:        #30363d;
+  --border:     #30363d;
+  --border2:    #21262d;
+
+  --text:       #e6edf3;
+  --text2:      #8b949e;
+  --text3:      #6e7681;
+
+  --get-fg:     #3fb950;
+  --get-bg:     #0d2116;
+  --get-bd:     #1a4226;
+  --post-fg:    #58a6ff;
+  --post-bg:    #0d1e36;
+  --post-bd:    #1a3660;
+
+  --c200-fg: #3fb950; --c200-bg: #0d2116;
+  --c201-fg: #56d364; --c201-bg: #0e2a18;
+  --c204-fg: #7ee787; --c204-bg: #112217;
+  --c400-fg: #d29922; --c400-bg: #2d1f00;
+  --c401-fg: #f78166; --c401-bg: #3d0f07;
+  --c404-fg: #ff7b72; --c404-bg: #3d100d;
+  --c500-fg: #db61a2; --c500-bg: #2d0f2d;
+
+  --auth-fg:  #d2a8ff; --auth-bg:  #1e0d2e; --auth-bd: #3d1f5e;
+  --ebook-fg: #39d353; --ebook-bg: #0b1f0e; --ebook-bd: #1a4226;
+  --cart-fg:  #ff9f43; --cart-bg:  #2d1500; --cart-bd:  #5e3000;
+  --order-fg: #58a6ff; --order-bg: #0d1e36; --order-bd: #1d3f6e;
+  --pay-fg:   #3fb950; --pay-bg:   #0d2116; --pay-bd:   #1a4226;
+
+  --radius: 8px;
+  --radius-sm: 5px;
+  --radius-lg: 12px;
+  --font: 'Sarabun', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --fs: 12px;
+}
+
+html { font-size: var(--fs); scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logo {
+  padding: 18px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-logo .logo-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 3px;
+  font-family: var(--mono);
+}
+
+.sidebar-nav { padding: 8px 0; flex: 1; }
+.nav-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px 16px 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  cursor: pointer;
+  border-radius: 0;
+  font-size: 12px;
+  color: var(--text2);
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active {
+  background: var(--bg3);
+  color: var(--text);
+  border-left-color: var(--gold);
+}
+.nav-method {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  min-width: 36px;
+  text-align: center;
+}
+.nm-get  { background: var(--get-bg);  color: var(--get-fg);  }
+.nm-post { background: var(--post-bg); color: var(--post-fg); }
+
+.sidebar-stats {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.stat-mini {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  text-align: center;
+}
+.stat-mini .num { font-size: 18px; font-weight: 700; color: var(--gold); font-family: var(--mono); }
+.stat-mini .lbl { font-size: 9px; color: var(--text3); margin-top: 1px; }
+
+/* ── Main Content ── */
+.main {
+  flex: 1;
+  overflow-x: hidden;
+}
+
+/* ── Top Bar ── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,17,23,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  flex: 0 0 280px;
+  transition: border-color 0.2s;
+}
+.search-box:focus-within { border-color: var(--gold); }
+.search-box input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  width: 100%;
+}
+.search-box input::placeholder { color: var(--text3); }
+.search-icon { color: var(--text3); font-size: 13px; }
+
+.filter-btns { display: flex; gap: 4px; }
+.filter-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  font-family: var(--font);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-btn:hover, .filter-btn.active { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 600; }
+
+/* ── Content Area ── */
+.content { padding: 24px; max-width: 1100px; }
+
+/* ── Hero Banner ── */
+.hero {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 50%, var(--blue) 100%);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(226,185,110,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.hero-left .hero-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+}
+.hero-left .hero-sub {
+  font-size: 13px;
+  color: #a8d8ff;
+  margin-top: 4px;
+}
+.hero-left .hero-url {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gold);
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(226,185,110,0.3);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  margin-top: 10px;
+  display: inline-block;
+}
+.hero-stats {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.hero-stat {
+  text-align: center;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  min-width: 70px;
+}
+.hero-stat .n { font-size: 26px; font-weight: 700; color: var(--gold); font-family: var(--mono); }
+.hero-stat .l { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+/* ── Section Header ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  margin-top: 28px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.section-header:first-of-type { margin-top: 0; }
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.section-count {
+  font-size: 10px;
+  font-family: var(--mono);
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: var(--bg3);
+  color: var(--text2);
+}
+
+/* ── API Card ── */
+.api-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.api-card:hover { box-shadow: 0 0 0 1px var(--border2); }
+.api-card.expanded { border-color: var(--bg4); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  user-select: none;
+}
+.card-header:hover { background: rgba(255,255,255,0.02); }
+
+.method-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.5px;
+  min-width: 46px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.mb-get  { background: var(--get-bg);  color: var(--get-fg);  border: 1px solid var(--get-bd); }
+.mb-post { background: var(--post-bg); color: var(--post-fg); border: 1px solid var(--post-bd); }
+
+.endpoint-path {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  flex: 1;
+}
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.http-codes-mini { display: flex; gap: 3px; }
+.hc {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.hc-200 { background: var(--c200-bg); color: var(--c200-fg); }
+.hc-201 { background: var(--c201-bg); color: var(--c201-fg); }
+.hc-204 { background: var(--c204-bg); color: var(--c204-fg); }
+.hc-400 { background: var(--c400-bg); color: var(--c400-fg); }
+.hc-401 { background: var(--c401-bg); color: var(--c401-fg); }
+.hc-404 { background: var(--c404-bg); color: var(--c404-fg); }
+.hc-500 { background: var(--c500-bg); color: var(--c500-fg); }
+
+.auth-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+}
+.auth-public { background: #0d2116; color: #3fb950; border: 1px solid #1a4226; }
+.auth-required { background: #2d1500; color: #ff9f43; border: 1px solid #5e3000; }
+.auth-warn { background: #2d1500; color: #ff7b72; border: 1px solid #5e3000; }
+
+.expand-icon {
+  color: var(--text3);
+  font-size: 11px;
+  transition: transform 0.2s;
+}
+.api-card.expanded .expand-icon { transform: rotate(180deg); }
+
+/* ── Card Body ── */
+.card-body {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 0;
+}
+.api-card.expanded .card-body { display: block; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0;
+}
+.detail-row {
+  display: contents;
+}
+.detail-row > .detail-label,
+.detail-row > .detail-value {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border2);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.detail-row:last-child > .detail-label,
+.detail-row:last-child > .detail-value {
+  border-bottom: none;
+}
+.detail-label {
+  font-weight: 600;
+  color: var(--text3);
+  font-size: 11px;
+  background: var(--bg3);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 10px;
+}
+.detail-value { color: var(--text); background: var(--bg2); }
+
+/* ── Code Block ── */
+.code-block {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.8;
+  overflow-x: auto;
+  position: relative;
+  color: #e6edf3;
+}
+.code-block .k  { color: #79c0ff; }  /* key */
+.code-block .s  { color: #a5d6ff; }  /* string */
+.code-block .n  { color: #ffa657; }  /* number */
+.code-block .b  { color: #ff7b72; }  /* bool */
+.code-block .c  { color: #8b949e; }  /* comment */
+
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text3);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-family: var(--font);
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.copy-btn:hover { background: var(--bg4); color: var(--text); }
+.copy-btn.copied { background: var(--get-bg); color: var(--get-fg); border-color: var(--get-bd); }
+
+.inline-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--gold);
+}
+.response-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--text2);
+}
+.response-ok   { color: var(--get-fg); }
+.response-err  { color: var(--c404-fg); }
+
+.http-code-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  margin-right: 4px;
+  margin-bottom: 3px;
+}
+.hcf-200 { background: var(--c200-bg); color: var(--c200-fg); border: 1px solid #1a4226; }
+.hcf-201 { background: var(--c201-bg); color: var(--c201-fg); border: 1px solid #1e4d2a; }
+.hcf-204 { background: var(--c204-bg); color: var(--c204-fg); border: 1px solid #1a4226; }
+.hcf-400 { background: var(--c400-bg); color: var(--c400-fg); border: 1px solid #5c3d00; }
+.hcf-401 { background: var(--c401-bg); color: var(--c401-fg); border: 1px solid #7a2319; }
+.hcf-404 { background: var(--c404-bg); color: var(--c404-fg); border: 1px solid #7a201d; }
+.hcf-500 { background: var(--c500-bg); color: var(--c500-fg); border: 1px solid #5a1f5a; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.tag-warn { background: #2d1f00; color: #d29922; border: 1px solid #5c3d00; }
+.tag-info { background: #0d1e36; color: #58a6ff; border: 1px solid #1d3f6e; }
+.tag-err  { background: #3d100d; color: #ff7b72; border: 1px solid #7a201d; }
+
+.used-in {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: #58a6ff;
+}
+.used-warn { color: var(--c404-fg); }
+
+.form-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ff-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+}
+.ff-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gold);
+  min-width: 130px;
+}
+.ff-type {
+  font-size: 10px;
+  color: var(--text3);
+  background: var(--bg3);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.ff-desc { color: var(--text2); font-size: 11px; }
+
+/* ── Issues Section ── */
+.issue-card {
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.issue-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 12px;
+}
+.issue-body {
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text2);
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+}
+.issue-high   .issue-header { background: #2d0b0b; color: #ff7b72; }
+.issue-medium .issue-header { background: #2d1f00; color: #d29922; }
+.issue-low    .issue-header { background: #0d1e36; color: #58a6ff; }
+
+/* ── Group color bar ── */
+.group-auth  .card-header { border-left: 3px solid var(--auth-fg);  }
+.group-ebook .card-header { border-left: 3px solid var(--ebook-fg); }
+.group-cart  .card-header { border-left: 3px solid var(--cart-fg);  }
+.group-order .card-header { border-left: 3px solid var(--order-fg); }
+.group-pay   .card-header { border-left: 3px solid var(--pay-fg);   }
+
+/* ── Hidden / Visible ── */
+.api-card.hidden { display: none; }
+
+/* ── Separator ── */
+.sep { height: 1px; background: var(--border); margin: 8px 0; }
+
+/* ── Tooltip ── */
+.tt { position: relative; }
+.tt::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg4);
+  color: var(--text);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.tt:hover::after { opacity: 1; }
+
+/* ── No-result state ── */
+.no-result {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+  font-size: 13px;
+  display: none;
+}
+.no-result.show { display: block; }
+
+/* ── Scrolltop ── */
+#scrolltop {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 36px;
+  height: 36px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 14px;
+  transition: all 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+#scrolltop.show { opacity: 1; pointer-events: all; }
+#scrolltop:hover { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+
+/* ── Print ── */
+@media print {
+  .sidebar, .topbar, #scrolltop { display: none !important; }
+  .main { margin: 0; }
+  .content { padding: 0; }
+  .api-card.hidden { display: block !important; }
+  .card-body { display: block !important; }
+  body { background: white; color: black; }
+}
+
+/* ── Response tabs ── */
+.res-tabs { display: flex; gap: 0; margin-bottom: 6px; }
+.res-tab {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.res-tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.res-tab:last-child  { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.res-tab + .res-tab  { border-left: none; }
+.res-tab.active-tab  { background: var(--bg4); color: var(--text); }
+.res-tab.ok-tab.active-tab  { background: var(--get-bg);  color: var(--get-fg);  border-color: var(--get-bd); }
+.res-tab.err-tab.active-tab { background: var(--c404-bg); color: var(--c404-fg); border-color: #7a201d; }
+.res-pane { display: none; }
+.res-pane.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================================================== -->
+  <!-- SIDEBAR                                            -->
+  <!-- ================================================== -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-title">📘 E-Book Shop</div>
+      <div class="logo-sub">REST API Cheat Sheet</div>
+    </div>
+
+    <div class="sidebar-nav">
+
+      <div class="nav-group-label">🔐 Authentication</div>
+      <a class="nav-item" href="#api-1" onclick="expandCard('api-1')">
+        <span class="nav-method nm-post">POST</span> login
+      </a>
+      <a class="nav-item" href="#api-2" onclick="expandCard('api-2')">
+        <span class="nav-method nm-post">POST</span> register
+      </a>
+      <a class="nav-item" href="#api-3" onclick="expandCard('api-3')">
+        <span class="nav-method nm-post">POST</span> logout
+      </a>
+
+      <div class="nav-group-label" style="margin-top:4px">📚 Ebooks</div>
+      <a class="nav-item" href="#api-4" onclick="expandCard('api-4')">
+        <span class="nav-method nm-get">GET</span> get_books
+      </a>
+      <a class="nav-item" href="#api-5" onclick="expandCard('api-5')">
+        <span class="nav-method nm-post">POST</span> my_ebooks
+      </a>
+      <a class="nav-item" href="#api-6" onclick="expandCard('api-6')">
+        <span class="nav-method nm-get">GET</span> ebooks (legacy)
+      </a>
+
+      <div class="nav-group-label" style="margin-top:4px">🛒 Cart</div>
+      <a class="nav-item" href="#api-7" onclick="expandCard('api-7')">
+        <span class="nav-method nm-post">POST</span> cart/add
+      </a>
+      <a class="nav-item" href="#api-8" onclick="expandCard('api-8')">
+        <span class="nav-method nm-post">POST</span> cart/list
+      </a>
+      <a class="nav-item" href="#api-9" onclick="expandCard('api-9')">
+        <span class="nav-method nm-post">POST</span> cart/remove
+      </a>
+
+      <div class="nav-group-label" style="margin-top:4px">📦 Orders</div>
+      <a class="nav-item" href="#api-10" onclick="expandCard('api-10')">
+        <span class="nav-method nm-post">POST</span> checkout
+      </a>
+      <a class="nav-item" href="#api-11" onclick="expandCard('api-11')">
+        <span class="nav-method nm-post">POST</span> get_orders
+      </a>
+      <a class="nav-item" href="#api-12" onclick="expandCard('api-12')">
+        <span class="nav-method nm-post">POST</span> get_order_details
+      </a>
+      <a class="nav-item" href="#api-13" onclick="expandCard('api-13')">
+        <span class="nav-method nm-post">POST</span> get_pending_orders
+      </a>
+
+      <div class="nav-group-label" style="margin-top:4px">💳 Payments</div>
+      <a class="nav-item" href="#api-14" onclick="expandCard('api-14')">
+        <span class="nav-method nm-post">POST</span> submit_payment
+      </a>
+
+      <div class="nav-group-label" style="margin-top:4px">⚠️ Issues</div>
+      <a class="nav-item" href="#issues">
+        <span style="color:#ff7b72;font-size:11px">7 รายการ</span>
+      </a>
+    </div>
+
+    <div class="sidebar-stats">
+      <div class="stat-mini"><div class="num">14</div><div class="lbl">Endpoints</div></div>
+      <div class="stat-mini"><div class="num">5</div><div class="lbl">Groups</div></div>
+      <div class="stat-mini"><div class="num">12</div><div class="lbl">POST</div></div>
+      <div class="stat-mini"><div class="num">2</div><div class="lbl">GET</div></div>
+    </div>
+  </nav>
+
+  <!-- ================================================== -->
+  <!-- MAIN                                               -->
+  <!-- ================================================== -->
+  <div class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-title">
+        🗂 API Cheat Sheet
+        <span style="font-size:11px;color:var(--text3);font-weight:400;">— คลิกที่ card เพื่อดูรายละเอียด</span>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="ค้นหา endpoint, method, description..." oninput="doSearch(this.value)"/>
+      </div>
+      <div class="filter-btns">
+        <button class="filter-btn active" onclick="filterGroup('all',this)">ทั้งหมด</button>
+        <button class="filter-btn" onclick="filterGroup('auth',this)" style="color:#d2a8ff">Auth</button>
+        <button class="filter-btn" onclick="filterGroup('ebook',this)" style="color:#39d353">Ebooks</button>
+        <button class="filter-btn" onclick="filterGroup('cart',this)" style="color:#ff9f43">Cart</button>
+        <button class="filter-btn" onclick="filterGroup('order',this)" style="color:#58a6ff">Orders</button>
+        <button class="filter-btn" onclick="filterGroup('pay',this)" style="color:#3fb950">Payments</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="hero-title">📘 E-Book Shop API</div>
+          <div class="hero-sub">PHP 8 + PDO · MySQL (ebookshop) · React Native (Expo) · Axios</div>
+          <div class="hero-url" onclick="copyText('http://10.71.5.12/ebook-store/api/', this)" style="cursor:pointer;user-select:all" title="คลิกเพื่อคัดลอก">
+            🔗 Base URL: http://10.71.5.12/ebook-store/api/
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="n">14</div><div class="l">Endpoints</div></div>
+          <div class="hero-stat"><div class="n">5</div><div class="l">Groups</div></div>
+          <div class="hero-stat"><div class="n" style="color:#ff7b72">No JWT</div><div class="l">Auth Type</div></div>
+        </div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- 🔐 AUTH                                          -->
+      <!-- ================================================ -->
+      <div class="section-header">
+        <span style="font-size:16px">🔐</span>
+        <span class="section-title" style="color:var(--auth-fg)">Authentication</span>
+        <span class="section-count">3 endpoints</span>
+      </div>
+
+      <!-- API 1: Login -->
+      <div class="api-card group-auth" id="api-1" data-group="auth" data-search="post login auth เข้าสู่ระบบ email password">
+        <div class="card-header" onclick="toggleCard('api-1')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/auth/login.php</span>
+          <span class="card-title">Login — เข้าสู่ระบบ</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-200">200</span>
+              <span class="hc hc-400">400</span>
+            </div>
+            <span class="auth-badge auth-public">Public</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">ตรวจสอบ <span class="inline-code">email</span> + <span class="inline-code">password</span> กับ database หากสำเร็จ คืน user object กลับมา Frontend เก็บไว้ใน <span class="inline-code">AsyncStorage</span></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value">
+                <div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{
+  <span class="k">"email"</span>: <span class="s">"user@example.com"</span>,
+  <span class="k">"password"</span>: <span class="s">"abc123"</span>
+}</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-200">200</span> สำเร็จ
+                <span class="http-code-full hcf-400">400</span> email/password ผิด หรือข้อมูลไม่ครบ
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-1-ok')">✅ 200 Success</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-1-err')">❌ 400 Error</button>
+                </div>
+                <div class="res-pane show" id="res-1-ok">
+                  <div class="code-block">
+{
+  <span class="k">"status"</span>: <span class="s">"success"</span>,
+  <span class="k">"message"</span>: <span class="s">"เข้าสู่ระบบสำเร็จ"</span>,
+  <span class="k">"user"</span>: {
+    <span class="k">"user_id"</span>: <span class="n">1</span>,
+    <span class="k">"username"</span>: <span class="s">"john"</span>,
+    <span class="k">"email"</span>: <span class="s">"user@example.com"</span>,
+    <span class="k">"role"</span>: <span class="s">"User"</span>
+  }
+}</div>
+                </div>
+                <div class="res-pane" id="res-1-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"อีเมลหรือรหัสผ่านไม่ถูกต้อง"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">LoginScreen.js</span> → <span class="inline-code">handleLogin()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 2: Register -->
+      <div class="api-card group-auth" id="api-2" data-group="auth" data-search="post register สมัครสมาชิก username email password">
+        <div class="card-header" onclick="toggleCard('api-2')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/auth/register.php</span>
+          <span class="card-title">Register — สมัครสมาชิก</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-201">201</span>
+              <span class="hc hc-400">400</span>
+            </div>
+            <span class="auth-badge auth-public">Public</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">สร้างบัญชีผู้ใช้ใหม่ <span class="inline-code">role</span> กำหนดเป็น <span class="inline-code">"User"</span> เสมอ ตรวจสอบ username/email ซ้ำ</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value">
+                <div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{
+  <span class="k">"username"</span>: <span class="s">"john_doe"</span>,
+  <span class="k">"email"</span>: <span class="s">"john@example.com"</span>,
+  <span class="k">"password"</span>: <span class="s">"securePass123"</span>
+}</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-201">201</span> สร้างสำเร็จ
+                <span class="http-code-full hcf-400">400</span> username/email ซ้ำ หรือข้อมูลไม่ครบ
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-2-ok')">✅ 201 Created</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-2-err')">❌ 400 Error</button>
+                </div>
+                <div class="res-pane show" id="res-2-ok">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"success"</span>, <span class="k">"message"</span>: <span class="s">"ลงทะเบียนสำเร็จ"</span> }</div>
+                </div>
+                <div class="res-pane" id="res-2-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"Username หรือ Email ถูกใช้ไปแล้ว"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">RegisterScreen.js</span> → <span class="inline-code">handleRegister()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 3: Logout -->
+      <div class="api-card group-auth" id="api-3" data-group="auth" data-search="post logout ออกจากระบบ session">
+        <div class="card-header" onclick="toggleCard('api-3')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/auth/logout.php</span>
+          <span class="card-title">Logout — ออกจากระบบ</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini"><span class="hc hc-200">200</span></div>
+            <span class="auth-badge auth-public">Public</span>
+            <span class="tag tag-warn">⚠ ไม่ถูกเรียก</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">ทำลาย PHP session ฝั่ง server — <strong>⚠ ไม่มี Screen ใดเรียก API นี้เลย</strong><br/>Frontend logout ทำผ่าน <span class="inline-code">AsyncStorage.removeItem("user")</span> อย่างเดียว ทำให้ session server ไม่ถูก destroy</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value" style="color:var(--text3)">— ไม่มี body —</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value"><span class="http-code-full hcf-200">200</span> สำเร็จ (session destroyed)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response ✅</div>
+              <div class="detail-value">
+                <div class="code-block">{ <span class="k">"success"</span>: <span class="b">true</span>, <span class="k">"message"</span>: <span class="s">"ออกจากระบบสำเร็จ"</span> }</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in used-warn">⚠ ไม่มี Screen ใดเรียก API นี้</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- 📚 EBOOKS                                        -->
+      <!-- ================================================ -->
+      <div class="section-header">
+        <span style="font-size:16px">📚</span>
+        <span class="section-title" style="color:var(--ebook-fg)">Ebooks</span>
+        <span class="section-count">3 endpoints</span>
+      </div>
+
+      <!-- API 4: get_books -->
+      <div class="api-card group-ebook" id="api-4" data-group="ebook" data-search="get books ebooks ดึงหนังสือ ทั้งหมด list">
+        <div class="card-header" onclick="toggleCard('api-4')">
+          <span class="method-badge mb-get">GET</span>
+          <span class="endpoint-path">/api/books/get_books.php</span>
+          <span class="card-title">Get All Books — ดึง e-book ทั้งหมด</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini"><span class="hc hc-200">200</span></div>
+            <span class="auth-badge auth-public">Public</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">ดึงรายการ e-book ทั้งหมดจาก DB เรียงจากใหม่ไปเก่า ไม่ต้อง login ไม่มี params</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request</div>
+              <div class="detail-value" style="color:var(--text3)">— ไม่มี body / params —</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value"><span class="http-code-full hcf-200">200</span> สำเร็จ (คืน array ว่างถ้าไม่มีข้อมูล)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response ✅ 200</div>
+              <div class="detail-value">
+                <div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{
+  <span class="k">"status"</span>: <span class="s">"success"</span>,
+  <span class="k">"ebooks"</span>: [
+    {
+      <span class="k">"ebook_id"</span>: <span class="n">1</span>,
+      <span class="k">"name"</span>: <span class="s">"ชื่อหนังสือ"</span>,
+      <span class="k">"description"</span>: <span class="s">"..."</span>,
+      <span class="k">"image"</span>: <span class="s">"cover.jpg"</span>,
+      <span class="k">"pdf_file"</span>: <span class="s">"book.pdf"</span>,
+      <span class="k">"price"</span>: <span class="s">"150.00"</span>,
+      <span class="k">"created_at"</span>: <span class="s">"2025-01-01 12:00:00"</span>
+    }
+  ]
+}</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value">
+                <span class="used-in">HomeScreen.js</span> → <span class="inline-code">fetchBooks()</span><br/>
+                <span class="used-in">UserDashboardScreen.js</span> → <span class="inline-code">fetchBooks()</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 5: my_ebooks -->
+      <div class="api-card group-ebook" id="api-5" data-group="ebook" data-search="post my ebooks คลัง confirmed ซื้อแล้ว pdf">
+        <div class="card-header" onclick="toggleCard('api-5')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/ebooks/my_ebooks.php</span>
+          <span class="card-title">My Ebooks — คลัง e-book ของฉัน (Confirmed เท่านั้น)</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-200">200</span>
+              <span class="hc hc-400">400</span>
+              <span class="hc hc-500">500</span>
+            </div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">ดึงเฉพาะ e-book ที่ <span class="inline-code">payment_status = "Confirmed"</span><br/>
+              ใช้ <span class="inline-code">DISTINCT</span> กัน duplicate &nbsp;·&nbsp; JOIN: orders → payments → order_items → ebooks<br/>
+              เรียงตาม <span class="inline-code">last_paid_at DESC</span></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value">
+                <div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span> }</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-200">200</span> สำเร็จ
+                <span class="http-code-full hcf-400">400</span> user_id ไม่ถูกต้อง
+                <span class="http-code-full hcf-500">500</span> DB Error
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-5-ok')">✅ 200 Success</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-5-err')">❌ 400 Error</button>
+                </div>
+                <div class="res-pane show" id="res-5-ok">
+                  <div class="code-block">{
+  <span class="k">"status"</span>: <span class="s">"success"</span>,
+  <span class="k">"ebooks"</span>: [{
+    <span class="k">"ebook_id"</span>: <span class="n">1</span>, <span class="k">"name"</span>: <span class="s">"ชื่อหนังสือ"</span>,
+    <span class="k">"pdf_file"</span>: <span class="s">"book.pdf"</span>, <span class="k">"price"</span>: <span class="s">"150.00"</span>,
+    <span class="k">"last_paid_at"</span>: <span class="s">"2025-01-15 10:00:00"</span>
+  }]
+}</div>
+                </div>
+                <div class="res-pane" id="res-5-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"ข้อมูลไม่ครบถ้วน"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">MyEbooksScreen.js</span> → <span class="inline-code">loadMyEbooks()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 6: ebooks legacy -->
+      <div class="api-card group-ebook" id="api-6" data-group="ebook" data-search="get ebooks legacy ไม่ใช้">
+        <div class="card-header" onclick="toggleCard('api-6')">
+          <span class="method-badge mb-get">GET</span>
+          <span class="endpoint-path">/api/ebooks.php</span>
+          <span class="card-title">Ebooks (Legacy) — ไม่ถูกใช้งาน</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini"><span class="hc hc-200">200</span></div>
+            <span class="auth-badge auth-public">Public</span>
+            <span class="tag tag-warn">⚠ Legacy</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">⚠ Legacy API — ไม่มี Frontend Screen ใดเรียก<br/>CORS allow <span class="inline-code">localhost:3000</span> — น่าจะเป็น API เก่าสำหรับ React web</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value"><span class="http-code-full hcf-200">200</span> สำเร็จ</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response ✅</div>
+              <div class="detail-value">
+                <div class="code-block">{ <span class="k">"success"</span>: <span class="b">true</span>, <span class="k">"data"</span>: [ <span class="c">/* ...ebook fields */</span> ] }</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in used-warn">⚠ ไม่มี Mobile Screen เรียก API นี้</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- 🛒 CART                                          -->
+      <!-- ================================================ -->
+      <div class="section-header">
+        <span style="font-size:16px">🛒</span>
+        <span class="section-title" style="color:var(--cart-fg)">Cart</span>
+        <span class="section-count">3 endpoints</span>
+      </div>
+
+      <!-- API 7: cart/add -->
+      <div class="api-card group-cart" id="api-7" data-group="cart" data-search="post cart add เพิ่มตะกร้า ebook_id">
+        <div class="card-header" onclick="toggleCard('api-7')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/cart/add.php</span>
+          <span class="card-title">Add to Cart — เพิ่มลงตะกร้า</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-200">200</span>
+              <span class="hc hc-400">400</span>
+            </div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">เพิ่ม ebook เข้าตะกร้า (<span class="inline-code">quantity = 1</span> เสมอ) กัน duplicate ด้วย UNIQUE constraint อัตโนมัติ</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value">
+                <div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span>, <span class="k">"ebook_id"</span>: <span class="n">5</span> }</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-200">200</span> เพิ่มสำเร็จ
+                <span class="http-code-full hcf-400">400</span> ซ้ำ หรือข้อมูลผิด
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-7-ok')">✅ 200 Success</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-7-err')">❌ 400 Duplicate</button>
+                </div>
+                <div class="res-pane show" id="res-7-ok">
+                  <div class="code-block">{
+  <span class="k">"status"</span>: <span class="s">"success"</span>, <span class="k">"message"</span>: <span class="s">"เพิ่มลงตะกร้าสำเร็จ"</span>,
+  <span class="k">"ebook_id"</span>: <span class="n">5</span>, <span class="k">"ebook_name"</span>: <span class="s">"ชื่อหนังสือ"</span>
+}</div>
+                </div>
+                <div class="res-pane" id="res-7-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"หนังสือนี้อยู่ในตะกร้าแล้ว"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">UserDashboardScreen.js</span> → <span class="inline-code">addToCart()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 8: cart/list -->
+      <div class="api-card group-cart" id="api-8" data-group="cart" data-search="post cart list ดูตะกร้า รายการ">
+        <div class="card-header" onclick="toggleCard('api-8')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/cart/list.php</span>
+          <span class="card-title">Cart List — ดูรายการในตะกร้า</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini"><span class="hc hc-200">200</span></div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value"><div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span> }</div></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value"><span class="http-code-full hcf-200">200</span> สำเร็จ (array ว่างถ้าตะกร้าว่าง)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response ✅ 200</div>
+              <div class="detail-value">
+                <div class="code-block">{
+  <span class="k">"status"</span>: <span class="s">"success"</span>,
+  <span class="k">"cart_items"</span>: [{
+    <span class="k">"cart_id"</span>: <span class="n">10</span>, <span class="k">"ebook_id"</span>: <span class="n">5</span>,
+    <span class="k">"name"</span>: <span class="s">"ชื่อหนังสือ"</span>, <span class="k">"image"</span>: <span class="s">"cover.jpg"</span>,
+    <span class="k">"price"</span>: <span class="s">"150.00"</span>, <span class="k">"quantity"</span>: <span class="n">1</span>,
+    <span class="k">"added_at"</span>: <span class="s">"2025-01-01 12:00:00"</span>
+  }]
+}</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">CartScreen.js</span> → <span class="inline-code">loadCartItemsFromDB()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 9: cart/remove -->
+      <div class="api-card group-cart" id="api-9" data-group="cart" data-search="post cart remove ลบตะกร้า">
+        <div class="card-header" onclick="toggleCard('api-9')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/cart/remove.php</span>
+          <span class="card-title">Cart Remove — ลบออกจากตะกร้า</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-200">200</span>
+              <span class="hc hc-404">404</span>
+            </div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value"><div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span>, <span class="k">"ebook_id"</span>: <span class="n">5</span> }</div></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-200">200</span> ลบสำเร็จ
+                <span class="http-code-full hcf-404">404</span> ไม่พบ item
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-9-ok')">✅ 200 Success</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-9-err')">❌ 404 Not Found</button>
+                </div>
+                <div class="res-pane show" id="res-9-ok">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"success"</span>, <span class="k">"message"</span>: <span class="s">"ลบออกจากตะกร้าสำเร็จ"</span> }</div>
+                </div>
+                <div class="res-pane" id="res-9-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"ไม่พบรายการนี้ในตะกร้า"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value">
+                <span class="used-in">CartScreen.js</span> → <span class="inline-code">removeFromCart()</span><br/>
+                <span class="used-in">CartScreen.js</span> → <span class="inline-code">clearCart()</span> <span class="tag tag-warn">⚠ N+1 วนลบทีละ item</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- 📦 ORDERS                                        -->
+      <!-- ================================================ -->
+      <div class="section-header">
+        <span style="font-size:16px">📦</span>
+        <span class="section-title" style="color:var(--order-fg)">Orders</span>
+        <span class="section-count">4 endpoints</span>
+      </div>
+
+      <!-- API 10: checkout -->
+      <div class="api-card group-order" id="api-10" data-group="order" data-search="post orders checkout สั่งซื้อ transaction">
+        <div class="card-header" onclick="toggleCard('api-10')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/orders/checkout.php</span>
+          <span class="card-title">Checkout — สร้าง Order + ล้าง Cart</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-200">200</span>
+              <span class="hc hc-400">400</span>
+              <span class="hc hc-500">500</span>
+            </div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">
+                อ่าน cart จาก DB อัตโนมัติ → คำนวณราคารวม → <span class="inline-code">INSERT orders</span> → <span class="inline-code">INSERT order_items</span> → <span class="inline-code">DELETE cart</span><br/>
+                ทั้งหมดใช้ <strong>DB Transaction</strong> (rollback ถ้าล้มเหลว)
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value"><div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span> }</div></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-200">200</span> สร้าง Order สำเร็จ
+                <span class="http-code-full hcf-400">400</span> ตะกร้าว่าง
+                <span class="http-code-full hcf-500">500</span> DB Rollback
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-10-ok')">✅ 200 Success</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-10-err')">❌ 400 Empty Cart</button>
+                </div>
+                <div class="res-pane show" id="res-10-ok">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"success"</span>, <span class="k">"order_id"</span>: <span class="n">42</span>, <span class="k">"total_price"</span>: <span class="s">"450.00"</span> }</div>
+                </div>
+                <div class="res-pane" id="res-10-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"ตะกร้าว่าง"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">CartScreen.js</span> → <span class="inline-code">handleCheckout()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 11: get_orders -->
+      <div class="api-card group-order" id="api-11" data-group="order" data-search="post orders get ประวัติ history">
+        <div class="card-header" onclick="toggleCard('api-11')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/orders/get_orders.php</span>
+          <span class="card-title">Get Orders — ดูประวัติ Order ทั้งหมด</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini"><span class="hc hc-200">200</span></div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="tag tag-warn">⚠ trailing /</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value"><div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span> }</div></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value"><span class="http-code-full hcf-200">200</span> สำเร็จ</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response ✅ 200</div>
+              <div class="detail-value">
+                <div class="code-block">{
+  <span class="k">"status"</span>: <span class="s">"success"</span>,
+  <span class="k">"orders"</span>: [{
+    <span class="k">"order_id"</span>: <span class="n">42</span>, <span class="k">"total_price"</span>: <span class="s">"450.00"</span>,
+    <span class="k">"order_status"</span>: <span class="s">"Pending"</span>,
+    <span class="k">"created_at"</span>: <span class="s">"2025-01-01 12:00:00"</span>
+  }]
+}</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value">
+                <span class="used-in">OrdersScreen.js</span> → <span class="inline-code">fetchOrders()</span>
+                <span class="tag tag-warn" style="margin-left:6px">⚠ URL มี trailing slash → อาจ 404</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 12: get_order_details -->
+      <div class="api-card group-order" id="api-12" data-group="order" data-search="post orders details รายละเอียด order_id">
+        <div class="card-header" onclick="toggleCard('api-12')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/orders/get_order_details.php</span>
+          <span class="card-title">Order Details — รายละเอียด Order</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-200">200</span>
+              <span class="hc hc-404">404</span>
+            </div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">ดึงรายละเอียด Order + รายการ e-book ตรวจสอบว่า <span class="inline-code">order_id</span> เป็นของ <span class="inline-code">user_id</span> จริง</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value"><div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span>, <span class="k">"order_id"</span>: <span class="n">42</span> }</div></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-200">200</span> สำเร็จ
+                <span class="http-code-full hcf-404">404</span> ไม่พบ หรือ order ไม่ใช่ของ user นี้
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-12-ok')">✅ 200 Success</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-12-err')">❌ 404 Not Found</button>
+                </div>
+                <div class="res-pane show" id="res-12-ok">
+                  <div class="code-block">{
+  <span class="k">"status"</span>: <span class="s">"success"</span>,
+  <span class="k">"order"</span>: { <span class="k">"order_id"</span>: <span class="n">42</span>, <span class="k">"total_price"</span>: <span class="s">"450.00"</span>, <span class="k">"order_status"</span>: <span class="s">"Pending"</span> },
+  <span class="k">"items"</span>: [{
+    <span class="k">"ebook_id"</span>: <span class="n">5</span>, <span class="k">"name"</span>: <span class="s">"ชื่อหนังสือ"</span>,
+    <span class="k">"pdf_file"</span>: <span class="s">"book.pdf"</span>, <span class="k">"quantity"</span>: <span class="n">1</span>, <span class="k">"price"</span>: <span class="s">"150.00"</span>
+  }]
+}</div>
+                </div>
+                <div class="res-pane" id="res-12-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"ไม่พบคำสั่งซื้อ"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">OrderDetailsScreen.js</span> → <span class="inline-code">fetchOrderDetails()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API 13: get_pending_orders -->
+      <div class="api-card group-order" id="api-13" data-group="order" data-search="post orders pending รอชำระ payment status">
+        <div class="card-header" onclick="toggleCard('api-13')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/orders/get_pending_orders.php</span>
+          <span class="card-title">Pending Orders — รายการรอชำระ</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini"><span class="hc hc-200">200</span></div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">ดึง Order ที่ <span class="inline-code">payment_status ≠ "Confirmed"</span> (รอชำระ หรือ รอ Admin ยืนยัน)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Request Body</div>
+              <div class="detail-value"><div class="code-block">
+                  <button class="copy-btn" onclick="copyBlock(this)">⎘ Copy</button>
+{ <span class="k">"user_id"</span>: <span class="n">1</span> }</div></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value"><span class="http-code-full hcf-200">200</span> สำเร็จ (array ว่างถ้าชำระครบแล้ว)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response ✅ 200</div>
+              <div class="detail-value">
+                <div class="code-block">{
+  <span class="k">"status"</span>: <span class="s">"success"</span>,
+  <span class="k">"orders"</span>: [{
+    <span class="k">"order_id"</span>: <span class="n">42</span>, <span class="k">"total_price"</span>: <span class="s">"450.00"</span>,
+    <span class="k">"order_status"</span>: <span class="s">"Pending"</span>,
+    <span class="k">"payment_status"</span>: <span class="s">"NotPaid"</span>
+  }]
+}</div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">PaymentScreen.js</span> → <span class="inline-code">loadPendingOrders()</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- 💳 PAYMENTS                                      -->
+      <!-- ================================================ -->
+      <div class="section-header">
+        <span style="font-size:16px">💳</span>
+        <span class="section-title" style="color:var(--pay-fg)">Payments</span>
+        <span class="section-count">1 endpoint</span>
+      </div>
+
+      <!-- API 14: submit_payment -->
+      <div class="api-card group-pay" id="api-14" data-group="pay" data-search="post payments submit สลิป multipart form-data upload">
+        <div class="card-header" onclick="toggleCard('api-14')">
+          <span class="method-badge mb-post">POST</span>
+          <span class="endpoint-path">/api/payments/submit_payment.php</span>
+          <span class="card-title">Submit Payment — ส่งสลิปการชำระเงิน</span>
+          <div class="card-header-right">
+            <div class="http-codes-mini">
+              <span class="hc hc-200">200</span>
+              <span class="hc hc-400">400</span>
+            </div>
+            <span class="auth-badge auth-required">user_id</span>
+            <span class="tag tag-info">multipart</span>
+            <span class="expand-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-label">คำอธิบาย</div>
+              <div class="detail-value">รับ <span class="inline-code">multipart/form-data</span> อัปโหลดรูปสลิปไปที่ <span class="inline-code">/uploads/payments/</span> บันทึก payment record สถานะ = Pending รอ Admin ยืนยัน</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Content-Type</div>
+              <div class="detail-value"><span class="tag tag-info" style="font-size:11px">multipart/form-data</span></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Form Fields</div>
+              <div class="detail-value">
+                <div class="form-fields-list">
+                  <div class="ff-row"><span class="ff-name">user_id</span><span class="ff-type">int</span><span class="ff-desc">รหัสผู้ใช้</span></div>
+                  <div class="ff-row"><span class="ff-name">order_id</span><span class="ff-type">int</span><span class="ff-desc">รหัส Order ที่ต้องการชำระ</span></div>
+                  <div class="ff-row"><span class="ff-name">transfer_amount</span><span class="ff-type">float</span><span class="ff-desc">ยอดที่โอน เช่น 450.00</span></div>
+                  <div class="ff-row"><span class="ff-name">transfer_date</span><span class="ff-type">YYYY-MM-DD</span><span class="ff-desc">วันที่โอน</span></div>
+                  <div class="ff-row"><span class="ff-name">transfer_time</span><span class="ff-type">HH:MM:SS</span><span class="ff-desc">เวลาที่โอน</span></div>
+                  <div class="ff-row"><span class="ff-name">proof_image</span><span class="ff-type">file</span><span class="ff-desc">รูปสลิป (jpg / png / webp)</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">HTTP Codes</div>
+              <div class="detail-value">
+                <span class="http-code-full hcf-200">200</span> ส่งสำเร็จ รอ Admin ยืนยัน
+                <span class="http-code-full hcf-400">400</span> ไฟล์ผิดประเภท / ข้อมูลไม่ครบ
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">
+                <div class="res-tabs">
+                  <button class="res-tab ok-tab active-tab" onclick="switchTab(this,'res-14-ok')">✅ 200 Success</button>
+                  <button class="res-tab err-tab" onclick="switchTab(this,'res-14-err')">❌ 400 Error</button>
+                </div>
+                <div class="res-pane show" id="res-14-ok">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"success"</span>, <span class="k">"message"</span>: <span class="s">"ส่งหลักฐานการชำระเงินแล้ว รอการตรวจสอบ"</span> }</div>
+                </div>
+                <div class="res-pane" id="res-14-err">
+                  <div class="code-block">{ <span class="k">"status"</span>: <span class="s">"error"</span>, <span class="k">"message"</span>: <span class="s">"ไฟล์รูปต้องเป็น jpg, png, webp เท่านั้น"</span> }</div>
+                </div>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Used In</div>
+              <div class="detail-value"><span class="used-in">PaymentScreen.js</span> → <span class="inline-code">submitPayment()</span> ส่งแบบ FormData ผ่าน axios</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- ⚠️ ISSUES                                        -->
+      <!-- ================================================ -->
+      <div class="section-header" id="issues">
+        <span style="font-size:16px">⚠️</span>
+        <span class="section-title" style="color:#ff7b72">ข้อสังเกต / ปัญหาที่พบ</span>
+        <span class="section-count">7 รายการ</span>
+      </div>
+
+      <div class="issue-card issue-high">
+        <div class="issue-header">🔴 HIGH &nbsp;—&nbsp; ไม่มี Authentication จริง</div>
+        <div class="issue-body">API ทุกตัวใช้แค่ <code class="inline-code">user_id</code> ใน Body โดยไม่มี JWT Token ผู้ใช้สามารถส่ง user_id ของคนอื่นเพื่อดูข้อมูลได้ ควรเพิ่ม <strong>JWT Bearer Token</strong> ใน <code class="inline-code">Authorization</code> Header</div>
+      </div>
+
+      <div class="issue-card issue-high">
+        <div class="issue-header">🔴 HIGH &nbsp;—&nbsp; Backend 2 ชุดซ้อนกัน — checkout ไม่ตรงกัน</div>
+        <div class="issue-body">
+          <code class="inline-code">API endpoint/orders/checkout.php</code> รับแค่ <code class="inline-code">{"user_id"}</code> (ใหม่)<br/>
+          <code class="inline-code">ebook-store/api/orders/checkout.php</code> รับ <code class="inline-code">{"user_id","total_price","cart_items[]"}</code> (เก่า)<br/>
+          Frontend ส่งแค่ user_id → <strong>ต้องใช้ไฟล์ใหม่เท่านั้น</strong>
+        </div>
+      </div>
+
+      <div class="issue-card issue-medium">
+        <div class="issue-header">🟡 MEDIUM &nbsp;—&nbsp; ebook-store/api/ ขาดไฟล์หลายตัว</div>
+        <div class="issue-body">ไฟล์ต่อไปนี้มีแค่ใน <code class="inline-code">API endpoint/</code> แต่ยังไม่ได้ deploy ไป <code class="inline-code">ebook-store/api/</code>:<br/>
+        cart/add.php · cart/list.php · cart/remove.php · orders/get_order_details.php · orders/get_pending_orders.php · payments/submit_payment.php · ebooks/my_ebooks.php</div>
+      </div>
+
+      <div class="issue-card issue-medium">
+        <div class="issue-header">🟡 MEDIUM &nbsp;—&nbsp; Trailing Slash ใน OrdersScreen URL</div>
+        <div class="issue-body"><code class="inline-code">const API_ORDERS_URL = ".../get_orders.php<strong>/</strong>";</code><br/>trailing slash อาจทำให้ server คืน 404 ขึ้นอยู่กับ Apache/Nginx config</div>
+      </div>
+
+      <div class="issue-card issue-low">
+        <div class="issue-header">🔵 LOW &nbsp;—&nbsp; Logout API ไม่ถูกเรียก</div>
+        <div class="issue-body">Frontend logout ผ่าน <code class="inline-code">AsyncStorage.removeItem("user")</code> อย่างเดียว ไม่ได้เรียก <code class="inline-code">/auth/logout.php</code> → PHP session ฝั่ง server ยังค้างอยู่</div>
+      </div>
+
+      <div class="issue-card issue-low">
+        <div class="issue-header">🔵 LOW &nbsp;—&nbsp; clearCart() N+1 Problem</div>
+        <div class="issue-body">CartScreen.js ล้างตะกร้าโดยวน <code class="inline-code">axios.post(remove)</code> ทีละ item แทนที่จะใช้ API <code class="inline-code">DELETE FROM cart WHERE user_id = ?</code> ทีเดียว</div>
+      </div>
+
+      <div class="issue-card issue-low">
+        <div class="issue-header">🔵 LOW &nbsp;—&nbsp; ไม่มี Admin REST API</div>
+        <div class="issue-body">Admin functions (confirm_payment, manage_ebooks, manage_users) ทำผ่าน PHP Web Pages โดยตรง ไม่สามารถเรียกจาก Mobile App ได้ หากต้องการ Admin App ในอนาคตต้องสร้าง Admin REST API แยก</div>
+      </div>
+
+      <div style="height:40px"></div>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div id="scrolltop" onclick="window.scrollTo({top:0,behavior:'smooth'})">▲</div>
+<div class="no-result" id="no-result">ไม่พบ API ที่ตรงกับการค้นหา 🔍</div>
+
+<!-- ================================================== -->
+<!-- JAVASCRIPT                                         -->
+<!-- ================================================== -->
+<script>
+// ── Toggle card expand/collapse ───────────────────────────────
+function toggleCard(id) {
+  const card = document.getElementById(id);
+  card.classList.toggle('expanded');
+  updateNavActive(id);
+}
+
+function expandCard(id) {
+  const card = document.getElementById(id);
+  if (card) card.classList.add('expanded');
+  updateNavActive(id);
+}
+
+function updateNavActive(id) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const href = document.querySelector(`.nav-item[href="#${id}"]`);
+  if (href) href.classList.add('active');
+}
+
+// ── Response tab switch ────────────────────────────────────────
+function switchTab(btn, paneId) {
+  const tabsContainer = btn.parentElement;
+  const bodyContainer = tabsContainer.parentElement;
+  tabsContainer.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active-tab'));
+  btn.classList.add('active-tab');
+  bodyContainer.querySelectorAll('.res-pane').forEach(p => p.classList.remove('show'));
+  const pane = document.getElementById(paneId);
+  if (pane) pane.classList.add('show');
+}
+
+// ── Copy code block ────────────────────────────────────────────
+function copyBlock(btn) {
+  const block = btn.parentElement;
+  // Get text content without the button text
+  const clone = block.cloneNode(true);
+  clone.querySelector('.copy-btn')?.remove();
+  const text = clone.innerText.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ Copy'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    btn.textContent = '✗ Error';
+    setTimeout(() => { btn.textContent = '⎘ Copy'; }, 2000);
+  });
+}
+
+function copyText(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = el.textContent;
+    el.textContent = '✅ Copied!';
+    setTimeout(() => { el.textContent = orig; }, 1500);
+  });
+}
+
+// ── Search ────────────────────────────────────────────────────
+let currentGroup = 'all';
+
+function doSearch(q) {
+  const query = q.toLowerCase().trim();
+  let visibleCount = 0;
+  document.querySelectorAll('.api-card').forEach(card => {
+    const searchData = card.getAttribute('data-search') || '';
+    const group = card.getAttribute('data-group') || '';
+    const matchesSearch = !query || searchData.toLowerCase().includes(query);
+    const matchesGroup = currentGroup === 'all' || group === currentGroup;
+    if (matchesSearch && matchesGroup) {
+      card.classList.remove('hidden');
+      visibleCount++;
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+  document.getElementById('no-result').classList.toggle('show', visibleCount === 0);
+}
+
+function filterGroup(group, btn) {
+  currentGroup = group;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  doSearch(document.getElementById('search-input').value);
+}
+
+// ── Keyboard shortcut: / to focus search ─────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+  if (e.key === 'Escape') document.getElementById('search-input').blur();
+});
+
+// ── Scroll to top button ──────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('scrolltop').classList.toggle('show', window.scrollY > 400);
+});
+
+// ── Active nav on scroll ───────────────────────────────────────
+window.addEventListener('scroll', () => {
+  const cards = document.querySelectorAll('.api-card[id]');
+  let current = '';
+  cards.forEach(card => {
+    if (card.getBoundingClientRect().top < 120) current = card.id;
+  });
+  if (current) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const a = document.querySelector(`.nav-item[href="#${current}"]`);
+    if (a) a.classList.add('active');
+  }
+});
+
+// ── Expand first card on load ─────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Auto-expand first API card as example
+  document.getElementById('api-1')?.classList.add('expanded');
+});
+</script>
+</body>
+</html>
